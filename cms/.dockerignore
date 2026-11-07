@@ -1,0 +1,13 @@
+node_modules
+.tmp
+.cache
+.strapi
+.strapi-updater.json
+public/uploads
+dist
+.env
+.env.*
+*.log
+.git
+.gitignore
+README.md

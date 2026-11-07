@@ -1,0 +1,31 @@
+{
+  "name": "topovik-migrate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.15",
+  "scripts": {
+    "filter-dump": "bun src/filter-dump.mjs",
+    "extract-authors": "bun src/extract-authors.mjs",
+    "migrate": "bun src/migrate.mjs",
+    "media": "bun src/media.mjs",
+    "redirects": "bun src/build-redirects.mjs",
+    "fix-dates": "bun src/fix-dates.mjs",
+    "fix-views": "bun src/fix-views.mjs",
+    "convert-md": "bun src/convert-content-to-md.mjs",
+    "fix-headings": "bun src/fix-headings.mjs",
+    "fix-list-images": "bun src/fix-list-images.mjs",
+    "cleanup-upload-formats": "bun src/cleanup-upload-formats.mjs",
+    "flatten-wp-content": "bun src/flatten-wp-content.mjs",
+    "all": "bun run filter-dump && bun run extract-authors && bun run migrate && bun run media && bun run redirects && bun run fix-dates && bun run convert-md"
+  },
+  "dependencies": {
+    "form-data": "^4.0.2",
+    "mysql2": "^3.14.0",
+    "pg": "^8.23.1",
+    "turndown": "^7.2.4"
+  },
+  "devDependencies": {
+    "@types/turndown": "^5.0.6"
+  }
+}

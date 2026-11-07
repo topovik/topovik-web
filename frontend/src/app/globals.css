@@ -1,0 +1,369 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #0a0a0a;
+  --paper: #f5f2ea;
+  --paper-2: #efece4;
+  --accent: #00a8ff;
+  --accent-ink: #0086cc;
+  --muted: #6a6a6a;
+  --sky: #ddeaf2;
+  --line: #0a0a0a;
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-muted: var(--muted);
+  --color-sky: var(--sky);
+  --color-line: var(--line);
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --max-width-site: 90rem;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--paper);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0.35;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Editorial masonry for article feed */
+.feed-masonry {
+  columns: 1;
+  column-gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .feed-masonry {
+    columns: 2;
+    column-gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .feed-masonry {
+    columns: 3;
+    column-gap: 1.15rem;
+  }
+}
+
+.feed-masonry > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@media (min-width: 1024px) {
+  .feed-masonry > * {
+    margin-bottom: 1.15rem;
+  }
+}
+
+.article-body {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: color-mix(in oklab, var(--ink) 88%, black);
+}
+
+/* Category / listing lede under the page title */
+.article-body--lede {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.article-body--lede p {
+  margin: 0 0 0.75em;
+}
+
+@media (min-width: 640px) {
+  .article-body--lede {
+    font-size: 1rem;
+  }
+}
+
+.article-body > :first-child {
+  margin-top: 0;
+}
+
+.article-body > :last-child {
+  margin-bottom: 0;
+}
+
+.article-body p {
+  margin: 0 0 1em;
+}
+
+.article-body img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.25rem 0;
+}
+
+/* Medium-style zoom (same animation model as medium-zoom: transform only) */
+.medium-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 0.3s;
+}
+
+.medium-zoom--opened .medium-zoom-overlay {
+  opacity: 1;
+  cursor: zoom-out;
+}
+
+.medium-zoom-image {
+  cursor: zoom-in;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1) !important;
+}
+
+.medium-zoom-image--hidden {
+  visibility: hidden;
+}
+
+.medium-zoom-image--opened {
+  position: relative;
+  z-index: 1001;
+  margin: 0 !important;
+  max-width: none !important;
+  cursor: zoom-out;
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .medium-zoom-overlay,
+  .medium-zoom-image,
+  .medium-zoom-image--opened {
+    transition: none !important;
+  }
+}
+
+.article-body a {
+  color: var(--accent-ink);
+  text-underline-offset: 2px;
+}
+
+.article-body h1,
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 2em 0 0.65em;
+  padding-top: 0.55em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.article-body h1 {
+  font-size: 2.25rem;
+}
+
+.article-body h2 {
+  font-size: 1.85rem;
+}
+
+.article-body h3 {
+  font-size: 1.45rem;
+}
+
+.article-body h4 {
+  font-size: 1.2rem;
+}
+
+.article-body h5,
+.article-body h6 {
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.article-body h1:first-child,
+.article-body h2:first-child,
+.article-body h3:first-child,
+.article-body h4:first-child,
+.article-body h5:first-child,
+.article-body h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.article-body ul,
+.article-body ol {
+  margin: 0 0 1em;
+  padding-left: 1.25rem;
+}
+
+.article-body li + li {
+  margin-top: 0.25em;
+}
+
+.article-body iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  margin: 1.25rem 0;
+  border: 0;
+  background: #000;
+}
+
+.article-body blockquote {
+  margin: 1em 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker-scroll 40s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* View Transitions — route navigations (React ViewTransition + Link transitionTypes) */
+:root {
+  --vt-exit: 150ms;
+  --vt-enter: 210ms;
+  --vt-move: 380ms;
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(site-header),
+::view-transition-group(site-footer) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(site-footer) {
+  display: none;
+}
+
+::view-transition-new(site-header),
+::view-transition-new(site-footer) {
+  animation: none;
+}
+
+/* Suspense skeleton → content (no Link transitionTypes) — silent swap */
+::view-transition-old(.none),
+::view-transition-new(.none) {
+  animation: none;
+}
+
+::view-transition-old(.page-fade) {
+  animation: var(--vt-exit) ease-out both vt-fade reverse;
+}
+
+::view-transition-new(.page-fade) {
+  animation: var(--vt-enter) ease-in var(--vt-exit) both vt-fade;
+}
+
+::view-transition-old(.nav-forward) {
+  --slide-offset: -48px;
+  animation:
+    var(--vt-exit) ease-in both vt-fade reverse,
+    var(--vt-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.nav-forward) {
+  --slide-offset: 48px;
+  animation:
+    var(--vt-enter) ease-out var(--vt-exit) both vt-fade,
+    var(--vt-move) ease-in-out both vt-slide;
+}
+
+::view-transition-old(.nav-back) {
+  --slide-offset: 48px;
+  animation:
+    var(--vt-exit) ease-in both vt-fade reverse,
+    var(--vt-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.nav-back) {
+  --slide-offset: -48px;
+  animation:
+    var(--vt-enter) ease-out var(--vt-exit) both vt-fade,
+    var(--vt-move) ease-in-out both vt-slide;
+}
+
+@keyframes vt-fade {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--slide-offset, 0);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

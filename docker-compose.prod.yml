@@ -1,0 +1,76 @@
+# Ports chosen to avoid conflict with vuca on the same host:
+# vuca uses host :3000 (next) and :1337 (cms).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-topovik}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-topovik}
+      POSTGRES_DB: ${POSTGRES_DB:-topovik}
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/topovik.dump:/dump/topovik.dump:ro
+    ports:
+      - "127.0.0.1:5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  cms:
+    build:
+      context: ./cms
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-topovik}
+      DATABASE_USERNAME: ${POSTGRES_USER:-topovik}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-topovik}
+      DATABASE_SSL: "false"
+      PUBLIC_URL: ${PUBLIC_URL:-https://topovik.com}
+      SERVER_PROXY: "true"
+      FRONTEND_URL: ${FRONTEND_URL:-https://topovik.com}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+    volumes:
+      - ./cms/public/uploads:/app/public/uploads
+    ports:
+      - "127.0.0.1:1340:1337"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      network: host
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://topovik.com}
+        NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://topovik.com}
+        STRAPI_URL: http://127.0.0.1:1340
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      STRAPI_URL: http://cms:1337
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://topovik.com}
+      NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://topovik.com}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+    ports:
+      - "127.0.0.1:3010:3000"
+    depends_on:
+      - cms
+
+volumes:
+  postgres_data:

@@ -1,0 +1,22 @@
+{
+  "name": "topovik",
+  "packageManager": "bun@1.2.15",
+  "private": true,
+  "scripts": {
+    "dev:cms": "bun run --cwd cms develop",
+    "build:cms": "bun run --cwd cms build",
+    "start:cms": "bun run --cwd cms start",
+    "dev:web": "bun run --cwd frontend dev",
+    "build:web": "bun run --cwd frontend build",
+    "start:web": "bun run --cwd frontend start",
+    "migrate:filter": "bun run --cwd scripts/migrate filter-dump",
+    "migrate:authors": "bun run --cwd scripts/migrate extract-authors",
+    "migrate": "bun run --cwd scripts/migrate migrate",
+    "migrate:media": "bun run --cwd scripts/migrate media",
+    "migrate:redirects": "bun run --cwd scripts/migrate redirects",
+    "migrate:views": "bun run --cwd scripts/migrate fix-views",
+    "migrate:all": "bun run --cwd scripts/migrate all",
+    "db:up": "docker compose up -d postgres",
+    "db:migrate-source": "docker compose --profile migrate up -d mysql"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_shared_seos",
+  "info": {
+    "displayName": "SEO",
+    "icon": "search",
+    "description": "SEO metadata migrated from AIOSEO"
+  },
+  "options": {},
+  "attributes": {
+    "metaTitle": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "metaDescription": {
+      "type": "text"
+    },
+    "canonicalPath": {
+      "type": "string",
+      "maxLength": 512
+    }
+  }
+}
