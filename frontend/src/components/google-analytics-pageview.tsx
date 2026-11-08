@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
@@ -21,18 +21,28 @@ function shouldSend(pagePath: string) {
   return true;
 }
 
-/** Sends a GA4 page_view on the first load and on App Router navigations. */
+/** Sends a GA4 page_view on App Router navigations. The first view comes from gtag config. */
 export function GoogleAnalyticsPageView({ gaId }: { gaId: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const skipFirst = useRef(true);
 
   useEffect(() => {
-    if (typeof window.gtag !== "function") return;
+    if (skipFirst.current) {
+      skipFirst.current = false;
+      return;
+    }
 
     const query = searchParams.toString();
     const page_path = query ? `${pathname}?${query}` : pathname;
     if (!shouldSend(page_path)) return;
 
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      function gtag() {
+        window.dataLayer?.push(arguments);
+      };
     window.gtag("event", "page_view", {
       page_path,
       page_location: window.location.href,

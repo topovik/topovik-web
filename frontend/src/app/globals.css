@@ -185,34 +185,64 @@ body {
 .article-body h6 {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: -0.02em;
-  margin: 2em 0 0.65em;
-  padding-top: 0.55em;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--ink);
 }
 
+/* Section labels inside the article — stronger than list entries */
+.article-body h1,
+.article-body h2 {
+  text-transform: uppercase;
+  margin: 2.6em 0 1em;
+  padding-top: 0.45em;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
 .article-body h1 {
-  font-size: 2.25rem;
+  font-size: 2.1rem;
 }
 
 .article-body h2 {
-  font-size: 1.85rem;
+  font-size: clamp(1.65rem, 2.6vw, 2.05rem);
 }
 
+.article-body h2:first-child,
+.article-body h1:first-child {
+  border-top: 0;
+}
+
+/* Numbered list entries / item titles — clearly subordinate to sections */
 .article-body h3 {
-  font-size: 1.45rem;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  margin: 1.9em 0 0.45em;
+  padding-top: 0;
+  line-height: 1.35;
+  color: color-mix(in oklab, var(--ink) 92%, black);
 }
 
 .article-body h4 {
-  font-size: 1.2rem;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: none;
+  margin: 1.5em 0 0.45em;
+  padding-top: 0;
 }
 
 .article-body h5,
 .article-body h6 {
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 1.35em 0 0.4em;
+  padding-top: 0;
 }
 
 .article-body h1:first-child,

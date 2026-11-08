@@ -11,9 +11,12 @@ export function GoogleAnalytics() {
 
   return (
     <>
-      <Script id="ga-init" strategy="beforeInteractive">
-        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('js',new Date());gtag('config','${gaId}',{send_page_view:false});`}
-      </Script>
+      <script
+        id="ga-init"
+        dangerouslySetInnerHTML={{
+          __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('consent','default',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});gtag('js',new Date());gtag('config','${gaId}');`,
+        }}
+      />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
         strategy="afterInteractive"

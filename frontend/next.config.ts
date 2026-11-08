@@ -50,6 +50,37 @@ const nextConfig: NextConfig = {
       { source: "/signin", destination: "/", permanent: true },
       { source: "/registration", destination: "/", permanent: true },
       { source: "/zabyli-parol", destination: "/", permanent: true },
+      // New articles: drop SEO-year "2026" from slugs
+      {
+        source: "/technologies/15-luchshikh-besplatnykh-nejjrosetejj-v-2026-godu",
+        destination: "/technologies/15-luchshikh-besplatnykh-nejjrosetejj",
+        permanent: true,
+      },
+      {
+        source: "/cinema/20-serialov-kotorye-stoit-posmotret-v-2026-godu",
+        destination: "/cinema/20-serialov-kotorye-stoit-posmotret",
+        permanent: true,
+      },
+      {
+        source: "/games/15-luchshikh-igr-na-telefon-v-2026-godu",
+        destination: "/games/15-luchshikh-igr-na-telefon",
+        permanent: true,
+      },
+      {
+        source: "/bussiness/10-idejj-biznesa-na-storone-v-2026-godu",
+        destination: "/bussiness/10-idejj-biznesa-na-storone",
+        permanent: true,
+      },
+      {
+        source: "/travel/kak-puteshestvovat-deshevo-v-2026-godu-12-rabochikh-sposobov",
+        destination: "/travel/kak-puteshestvovat-deshevo-12-rabochikh-sposobov",
+        permanent: true,
+      },
+      {
+        source: "/music/15-podkastov-i-plejlistov-kotorye-stoit-vklyuchit-v-2026",
+        destination: "/music/15-podkastov-i-plejlistov-kotorye-stoit-vklyuchit",
+        permanent: true,
+      },
     ];
   },
   turbopack: {

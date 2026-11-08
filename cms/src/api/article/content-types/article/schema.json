@@ -82,5 +82,19 @@
       "repeatable": false,
       "component": "shared.seo"
     }
-  }
+  },
+  "indexes": [
+    {
+      "name": "articles_slug_idx",
+      "columns": ["slug"]
+    },
+    {
+      "name": "articles_published_at_idx",
+      "columns": ["published_at"]
+    },
+    {
+      "name": "articles_legacy_path_idx",
+      "columns": ["legacy_path"]
+    }
+  ]
 }
