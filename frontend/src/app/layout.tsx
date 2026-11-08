@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Alumni_Sans, IBM_Plex_Sans } from "next/font/google";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import { JsonLd } from "@/components/json-ld";
 import { PageTransition } from "@/components/page-transition";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </div>
         <SiteFooter categories={categories} />
         <ScrollToTop />
+        <GoogleAnalytics />
       </body>
     </html>
   );

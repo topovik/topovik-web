@@ -15,6 +15,8 @@ bun run dev
 Сайт: http://localhost:3000  
 API: `NEXT_PUBLIC_STRAPI_URL` / `STRAPI_URL` (по умолчанию `http://127.0.0.1:1337`)
 
+Google Analytics 4: `NEXT_PUBLIC_GA_MEASUREMENT_ID` (`G-…`). Пустое значение отключает тег. В Docker переменная вшивается на этапе сборки frontend.
+
 ## SEO-маршруты
 
 | Тип | Путь |
