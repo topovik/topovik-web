@@ -1,4 +1,3 @@
-import { cacheLife } from "next/cache";
 import { STRAPI_URL } from "@/lib/config";
 
 /** Read width/height from PNG / JPEG / WebP headers (first 64 KiB). */
@@ -116,9 +115,15 @@ function absoluteUploadUrl(path: string) {
 }
 
 /** Read at most `limit` bytes (Range often ignored by CDNs / proxies). */
-async function readPrefix(url: string, limit = 65536): Promise<Uint8Array | null> {
+async function readPrefix(
+  url: string,
+  limit = 65536,
+  timeoutMs = 2500,
+): Promise<Uint8Array | null> {
   const res = await fetch(url, {
     headers: { Range: `bytes=0-${limit - 1}` },
+    signal: AbortSignal.timeout(timeoutMs),
+    cache: "force-cache",
   });
   if (!res.ok && res.status !== 206) return null;
 
@@ -155,14 +160,14 @@ async function readPrefix(url: string, limit = 65536): Promise<Uint8Array | null
 
 /**
  * Resolve intrinsic sizes for CMS uploads so <img width/height> can reserve
- * layout before bytes arrive (CLS). Cached aggressively — headers only.
+ * layout before bytes arrive (CLS).
+ *
+ * No `"use cache"` here — it deadlocked article Suspense streams in prod.
+ * Per-image timeout keeps SSR from hanging if Strapi/uploads stall.
  */
 export async function resolveUploadDimensions(
   content: string,
 ): Promise<Record<string, { width: number; height: number }>> {
-  "use cache";
-  cacheLife("max");
-
   const paths = extractUploadPaths(content);
   if (!paths.length) return {};
 
