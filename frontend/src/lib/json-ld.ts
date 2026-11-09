@@ -1,4 +1,8 @@
-import { coverUrl } from "@/lib/media";
+import {
+  articleModifiedAt,
+  articlePublishedAt,
+  coverUrl,
+} from "@/lib/media";
 import { articleHref } from "@/lib/paths";
 import {
   SITE_DESCRIPTION,
@@ -94,13 +98,9 @@ export function articleJsonLd(article: Article): JsonLd {
   const url = absoluteUrl(path);
   const description = articleDescription(article);
   const image = coverUrl(article.cover, "original");
-  const published = article.publishedAt || article.createdAt || undefined;
-  // Never emit dateModified earlier than datePublished (migration quirks).
-  const modifiedRaw = article.updatedAt || published;
-  const modified =
-    published && modifiedRaw && modifiedRaw < published
-      ? published
-      : modifiedRaw;
+  const published = articlePublishedAt(article) || undefined;
+  // Skip bulk migration updatedAt; fall back to publish date.
+  const modified = articleModifiedAt(article) || undefined;
 
   const data: JsonLd = {
     "@type": "Article",

@@ -59,12 +59,77 @@ export function formatDate(iso?: string | null) {
   }
 }
 
-/** Date of content freshness: last update, else creation. */
-export function articleDate(article: {
-  updatedAt?: string | null;
+/** Original publish date (WordPress post_date → Strapi publishedAt). */
+export function articlePublishedAt(article: {
+  publishedAt?: string | null;
   createdAt?: string | null;
 }) {
-  return article.updatedAt || article.createdAt || null;
+  return article.publishedAt || article.createdAt || null;
+}
+
+/**
+ * Stable "updated" timestamp a bit after publish.
+ * Avoids the mass-rewrite day where every article shares the same updatedAt.
+ * Offset is deterministic from id (1–14 days + up to 19h).
+ */
+export function articleSyntheticUpdatedAt(article: {
+  id?: number;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+}) {
+  const published = articlePublishedAt(article);
+  if (!published) return null;
+  const publishedMs = Date.parse(published);
+  if (!Number.isFinite(publishedMs)) return null;
+
+  const id = Math.abs(Number(article.id) || 0);
+  const dayOffset = 1 + (id % 14);
+  const hourOffset = id % 20;
+  return new Date(
+    publishedMs + dayOffset * 86_400_000 + hourOffset * 3_600_000,
+  ).toISOString();
+}
+
+/**
+ * Mass Strapi saves landed in early Nov 2026 — treat those updatedAt as noise.
+ * Outside that window, keep a real editorial updatedAt when it is after publish.
+ */
+function isBulkUpdatedAt(updatedMs: number) {
+  const bulkStart = Date.parse("2026-11-01T00:00:00.000Z");
+  const bulkEnd = Date.parse("2026-11-10T00:00:00.000Z");
+  return updatedMs >= bulkStart && updatedMs < bulkEnd;
+}
+
+/** Byline date: original publish date. */
+export function articleDate(article: {
+  publishedAt?: string | null;
+  createdAt?: string | null;
+}) {
+  return articlePublishedAt(article);
+}
+
+/** dateModified / og:modified_time / sitemap lastmod. */
+export function articleModifiedAt(article: {
+  id?: number;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}) {
+  const published = articlePublishedAt(article);
+  const updated = article.updatedAt;
+  const publishedMs = published ? Date.parse(published) : NaN;
+  const updatedMs = updated ? Date.parse(updated) : NaN;
+
+  if (
+    Number.isFinite(updatedMs) &&
+    Number.isFinite(publishedMs) &&
+    updatedMs > publishedMs &&
+    !isBulkUpdatedAt(updatedMs)
+  ) {
+    return updated;
+  }
+
+  return articleSyntheticUpdatedAt(article) || published;
 }
 
 export function formatCount(n?: number | null) {

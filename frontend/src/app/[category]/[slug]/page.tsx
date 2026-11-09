@@ -18,6 +18,7 @@ import {
 } from "@/lib/strapi";
 import {
   articleDate,
+  articleModifiedAt,
   coverBlur,
   formatCount,
   formatDate,
@@ -81,7 +82,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...social.openGraph,
       type: "article",
       publishedTime: article.publishedAt || undefined,
-      modifiedTime: article.updatedAt || undefined,
+      modifiedTime: articleModifiedAt(article) || undefined,
       section: article.category?.name || undefined,
       tags: article.tags?.map((tag) => tag.name),
     },

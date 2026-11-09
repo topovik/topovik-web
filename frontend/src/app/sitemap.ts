@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { CATEGORY_PAGE_SIZE } from "@/lib/categories";
 import { absoluteUrl } from "@/lib/json-ld";
+import { articleModifiedAt } from "@/lib/media";
 import { categoryHref } from "@/lib/paths";
 import { articleCanonicalPath, pageCanonicalPath } from "@/lib/seo";
 import {
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const articleEntries: MetadataRoute.Sitemap = articles.map((article) => ({
     url: absoluteUrl(articleCanonicalPath(article)),
-    lastModified: article.updatedAt || article.publishedAt || undefined,
+    lastModified: articleModifiedAt(article) || undefined,
     changeFrequency: "weekly",
     priority: 0.8,
   }));
