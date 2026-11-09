@@ -344,18 +344,24 @@ export async function getPopularArticles(limit = 5) {
   }
 }
 
-/** Older / newer neighbours by publish date — prefer same category. */
-export async function getAdjacentArticles(article: Article) {
+/** Older / newer neighbours by publish date — prefer same category.
+ * Pass primitives only — full Article in `"use cache"` args makes huge Redis keys.
+ */
+export async function getAdjacentArticles(opts: {
+  documentId: string;
+  publishedAt?: string | null;
+  categorySlug?: string | null;
+}) {
   "use cache";
   cacheLife("max");
   cacheTag(CACHE_TAGS.articles);
-  if (article.category?.slug) cacheTag(CACHE_TAGS.category(article.category.slug));
+  if (opts.categorySlug) cacheTag(CACHE_TAGS.category(opts.categorySlug));
 
-  const publishedAt = article.publishedAt;
+  const publishedAt = opts.publishedAt;
   if (!publishedAt) return { prev: null, next: null };
 
-  const categoryFilter = article.category?.slug
-    ? `filters[category][slug][$eq]=${encodeURIComponent(article.category.slug)}`
+  const categoryFilter = opts.categorySlug
+    ? `filters[category][slug][$eq]=${encodeURIComponent(opts.categorySlug)}`
     : null;
 
   const base = [`status=published`, `pagination[pageSize]=1`, articlePopulate];
@@ -367,7 +373,7 @@ export async function getAdjacentArticles(article: Article) {
         `/api/articles?${[
           ...base,
           `filters[publishedAt][$lt]=${encodeURIComponent(publishedAt)}`,
-          `filters[documentId][$ne]=${encodeURIComponent(article.documentId)}`,
+          `filters[documentId][$ne]=${encodeURIComponent(opts.documentId)}`,
           `sort=publishedAt:desc`,
         ].join("&")}`,
       ),
@@ -375,7 +381,7 @@ export async function getAdjacentArticles(article: Article) {
         `/api/articles?${[
           ...base,
           `filters[publishedAt][$gt]=${encodeURIComponent(publishedAt)}`,
-          `filters[documentId][$ne]=${encodeURIComponent(article.documentId)}`,
+          `filters[documentId][$ne]=${encodeURIComponent(opts.documentId)}`,
           `sort=publishedAt:asc`,
         ].join("&")}`,
       ),
@@ -396,16 +402,23 @@ export async function getAdjacentArticles(article: Article) {
  * 2) same category, recent
  * 3) site-wide popular by views as fill
  * Current article is always excluded.
+ * Primitives only in args — never pass full Article into `"use cache"`.
  */
-export async function getRecommendedArticles(article: Article, limit = 16) {
+export async function getRecommendedArticles(opts: {
+  documentId: string;
+  categorySlug?: string | null;
+  tagSlugs?: string[];
+  limit?: number;
+}) {
   "use cache";
   cacheLife("max");
+  const limit = opts.limit ?? 16;
+  const tagSlugs = (opts.tagSlugs || []).filter(Boolean);
   cacheTag(CACHE_TAGS.articles);
-  if (article.category?.slug) cacheTag(CACHE_TAGS.category(article.category.slug));
-  for (const tag of article.tags || []) cacheTag(CACHE_TAGS.tag(tag.slug));
+  if (opts.categorySlug) cacheTag(CACHE_TAGS.category(opts.categorySlug));
+  for (const slug of tagSlugs) cacheTag(CACHE_TAGS.tag(slug));
 
-  const exclude = article.documentId;
-  const tagSlugs = (article.tags || []).map((t) => t.slug).filter(Boolean);
+  const exclude = opts.documentId;
   const fetchSize = Math.max(limit * 2, 12);
   const emptyList: StrapiListResponse<Article> = {
     data: [],
@@ -432,10 +445,10 @@ export async function getRecommendedArticles(article: Article, limit = 16) {
       })()
     : Promise.resolve(emptyList);
 
-  const byCategoryPromise = article.category?.slug
+  const byCategoryPromise = opts.categorySlug
     ? getArticles({
         pageSize: fetchSize,
-        categorySlug: article.category.slug,
+        categorySlug: opts.categorySlug,
       })
     : Promise.resolve(emptyList);
 
@@ -462,7 +475,7 @@ export async function getRecommendedArticles(article: Article, limit = 16) {
       tagSlugs.includes(t.slug)
     ).length;
     const sameCategory =
-      item.category?.slug && item.category.slug === article.category?.slug
+      item.category?.slug && item.category.slug === opts.categorySlug
         ? 1
         : 0;
     return (

@@ -7,6 +7,8 @@ const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 
 const ENTRY_PREFIX = "nextjs:use-cache:";
 const TAG_PREFIX = "nextjs:use-cache-tag:";
+/** Refuse oversized keys (full Article args) — miss instead of melting Redis/CPU. */
+const MAX_KEY_BYTES = 2048;
 
 const client = createClient({
   url: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
@@ -39,6 +41,10 @@ async function getClient() {
 
 module.exports = {
   async get(cacheKey) {
+    if (Buffer.byteLength(String(cacheKey), "utf8") > MAX_KEY_BYTES) {
+      return undefined;
+    }
+
     const redis = await getClient();
     if (!redis) return undefined;
 
@@ -97,6 +103,25 @@ module.exports = {
   },
 
   async set(cacheKey, pendingEntry) {
+    if (Buffer.byteLength(String(cacheKey), "utf8") > MAX_KEY_BYTES) {
+      // Drain so the stream doesn't hang, but do not store.
+      try {
+        const entry = await pendingEntry;
+        const reader = entry.value.getReader();
+        try {
+          while (true) {
+            const { done } = await reader.read();
+            if (done) break;
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
     const redis = await getClient();
     if (!redis) return;
 

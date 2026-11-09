@@ -73,6 +73,7 @@ services:
         NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://topovik.com}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         STRAPI_URL: http://127.0.0.1:1340
+        REDIS_CACHE: ${REDIS_CACHE:-1}
     restart: unless-stopped
     env_file:
       - .env
@@ -85,6 +86,7 @@ services:
       NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_CACHE: ${REDIS_CACHE:-1}
     ports:
       - "127.0.0.1:3010:3000"
     depends_on:

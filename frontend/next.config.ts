@@ -8,15 +8,13 @@ const strapiUrl = (
 ).replace(/\/$/, "");
 
 /**
- * Wire Redis handlers in production builds even if REDIS_URL is only set at
- * runtime (Docker). Handlers no-op / miss when Redis is unreachable.
- * Dev keeps the default in-memory LRU (set REDIS_CACHE=1 to force Redis).
+ * Redis for `"use cache"` data only (set REDIS_CACHE=1 at build + runtime).
+ * Do NOT put full-page ISR HTML in Redis (`cacheHandler`) — homepage is ~1.7MB
+ * and Redis HIT still cost ~15–20s TTFB deserializing it.
+ * Args to `"use cache"` must stay primitives (documentId/slug), not full Article.
  */
-const useRedisCache =
-  process.env.REDIS_CACHE === "1" ||
-  (process.env.NODE_ENV === "production" && process.env.REDIS_CACHE !== "0");
+const useRedisCache = process.env.REDIS_CACHE === "1";
 
-const redisIsrHandler = path.join(__dirname, "cache-handler.js");
 const redisUseCacheHandler = path.join(
   __dirname,
   "cache-handlers/use-cache-redis.js",
@@ -26,17 +24,12 @@ const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
-  // Singular: ISR / route handlers / images. Plural: `'use cache'` family.
   ...(useRedisCache
     ? {
-        cacheHandler: redisIsrHandler,
         cacheHandlers: {
-          // Plain `"use cache"` in strapi.ts → default handler.
           default: redisUseCacheHandler,
           remote: redisUseCacheHandler,
         },
-        // Redis is the shared source of truth — don't keep a second in-process copy.
-        cacheMaxMemorySize: 0,
       }
     : {}),
   allowedDevOrigins: ["127.0.0.1", "localhost"],

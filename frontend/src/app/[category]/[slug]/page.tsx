@@ -105,8 +105,17 @@ async function ArticleFromParams({ params }: Props) {
 async function ArticleContent({ article }: { article: Article }) {
   const [comments, adjacent, recommended] = await Promise.all([
     getApprovedComments(article.documentId).catch(() => []),
-    getAdjacentArticles(article).catch(() => ({ prev: null, next: null })),
-    getRecommendedArticles(article, 16).catch(() => []),
+    getAdjacentArticles({
+      documentId: article.documentId,
+      publishedAt: article.publishedAt,
+      categorySlug: article.category?.slug,
+    }).catch(() => ({ prev: null, next: null })),
+    getRecommendedArticles({
+      documentId: article.documentId,
+      categorySlug: article.category?.slug,
+      tagSlugs: (article.tags || []).map((t) => t.slug),
+      limit: 16,
+    }).catch(() => []),
   ]);
   const cover = mediaUrl(article.cover?.url);
   const blur = coverBlur(article.cover);
