@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/search", "/api/"],
       },
     ],
+    // No `host` — Googlebot ignores Host: (Yandex-only); GSC flags it as a warning.
     sitemap: `${origin}/sitemap.xml`,
-    host: origin,
   };
 }
