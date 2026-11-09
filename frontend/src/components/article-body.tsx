@@ -47,6 +47,24 @@ function readDim(...values: Array<string | number | undefined>) {
   return undefined;
 }
 
+function isExternalHref(href?: string) {
+  if (!href) return false;
+  if (href.startsWith("/") || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+    return false;
+  }
+  try {
+    const url = new URL(href, "https://topovik.com");
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    const siteHost = new URL(
+      process.env.NEXT_PUBLIC_SITE_URL || "https://topovik.com",
+    ).hostname.replace(/^www\./, "");
+    const host = url.hostname.replace(/^www\./, "");
+    return host !== siteHost;
+  } catch {
+    return false;
+  }
+}
+
 /** Render Strapi richtext (Markdown; legacy HTML tolerated via rehype-raw). */
 export async function ArticleBody({
   content,
@@ -76,11 +94,20 @@ export async function ArticleBody({
         />
       );
     },
-    a: ({ href, children, title }) => (
-      <a href={href} title={title} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
-        {children}
-      </a>
-    ),
+    a: ({ href, children, title }) => {
+      const external = isExternalHref(href);
+      return (
+        <a
+          href={href}
+          title={title}
+          {...(external
+            ? { target: "_blank", rel: "noopener noreferrer" }
+            : {})}
+        >
+          {children}
+        </a>
+      );
+    },
     iframe: (props) => {
       const src = typeof props.src === "string" ? props.src : undefined;
       if (!src) return null;
