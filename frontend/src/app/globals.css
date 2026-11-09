@@ -129,7 +129,8 @@ body {
   max-width: 100%;
   height: auto;
   margin: 1.25rem 0;
-  /* width/height attrs (or inline aspect-ratio) reserve space before decode */
+  /* Never stretch: if width/height attrs disagree with the file, keep proportions */
+  object-fit: contain;
   background: color-mix(in oklab, var(--ink) 5%, transparent);
 }
 

@@ -11,7 +11,9 @@ export type StrapiMedia = {
   width?: number;
   height?: number;
   formats?: {
+    large?: StrapiMediaFormat | null;
     medium?: StrapiMediaFormat | null;
+    small?: StrapiMediaFormat | null;
     thumbnail?: StrapiMediaFormat | null;
   } | null;
   /** Strapi stores LQIP in provider_metadata.placeholder */

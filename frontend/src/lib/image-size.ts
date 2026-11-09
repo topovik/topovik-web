@@ -109,9 +109,17 @@ export function extractUploadPaths(content: string): string[] {
   return [...found];
 }
 
-function absoluteUploadUrl(path: string) {
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `${STRAPI_URL}${path.startsWith("/") ? path : `/${path}`}`;
+function uploadBases() {
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  // Prefer public site (nginx /uploads) — more reliable than cms:1337 during SSR.
+  const bases = [site, STRAPI_URL].filter(Boolean);
+  return [...new Set(bases)];
+}
+
+function absoluteUploadUrls(path: string) {
+  if (path.startsWith("http://") || path.startsWith("https://")) return [path];
+  const rel = path.startsWith("/") ? path : `/${path}`;
+  return uploadBases().map((base) => `${base}${rel}`);
 }
 
 /** Read at most `limit` bytes (Range often ignored by CDNs / proxies). */
@@ -174,10 +182,13 @@ export async function resolveUploadDimensions(
   const entries = await Promise.all(
     paths.map(async (path) => {
       try {
-        const buf = await readPrefix(absoluteUploadUrl(path));
-        if (!buf) return null;
-        const size = probeImageSize(buf);
-        return size ? ([path, size] as const) : null;
+        for (const url of absoluteUploadUrls(path)) {
+          const buf = await readPrefix(url);
+          if (!buf) continue;
+          const size = probeImageSize(buf);
+          if (size) return [path, size] as const;
+        }
+        return null;
       } catch {
         return null;
       }

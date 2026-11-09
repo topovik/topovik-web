@@ -193,8 +193,11 @@ export function ZoomableImage({
       width={w}
       height={h}
       data-zoom-src={src}
-      // Fallback box when CMS dims are missing — better than 0→full jump.
-      style={w && h ? undefined : { aspectRatio: "3 / 4" }}
+      // CLS: always reserve height before decode.
+      // Prefer real dims; 16/9 fallback matches most listicle art (was 3/4 and
+      // stretched landscape into a portrait box). object-fit:contain in CSS
+      // keeps proportions if the fallback is slightly off.
+      style={{ aspectRatio: w && h ? `${w} / ${h}` : "16 / 9" }}
     />
   );
 }

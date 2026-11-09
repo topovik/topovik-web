@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const strapiUrl = (
   process.env.STRAPI_URL ||
@@ -6,10 +7,38 @@ const strapiUrl = (
   "http://127.0.0.1:1337"
 ).replace(/\/$/, "");
 
+/**
+ * Wire Redis handlers in production builds even if REDIS_URL is only set at
+ * runtime (Docker). Handlers no-op / miss when Redis is unreachable.
+ * Dev keeps the default in-memory LRU (set REDIS_CACHE=1 to force Redis).
+ */
+const useRedisCache =
+  process.env.REDIS_CACHE === "1" ||
+  (process.env.NODE_ENV === "production" && process.env.REDIS_CACHE !== "0");
+
+const redisIsrHandler = path.join(__dirname, "cache-handler.js");
+const redisUseCacheHandler = path.join(
+  __dirname,
+  "cache-handlers/use-cache-redis.js",
+);
+
 const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
+  // Singular: ISR / route handlers / images. Plural: `'use cache'` family.
+  ...(useRedisCache
+    ? {
+        cacheHandler: redisIsrHandler,
+        cacheHandlers: {
+          // Plain `"use cache"` in strapi.ts → default handler.
+          default: redisUseCacheHandler,
+          remote: redisUseCacheHandler,
+        },
+        // Redis is the shared source of truth — don't keep a second in-process copy.
+        cacheMaxMemorySize: 0,
+      }
+    : {}),
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   trailingSlash: false,
   images: {

@@ -105,7 +105,7 @@ done
 
 echo '==> 3/3 build + start frontend (Next) on :'"$WEB_PORT"
 docker compose -f docker-compose.prod.yml build frontend
-docker compose -f docker-compose.prod.yml up -d --remove-orphans postgres cms frontend
+docker compose -f docker-compose.prod.yml up -d --remove-orphans postgres redis cms frontend
 
 echo '==> waiting cms/frontend ports'
 for i in $(seq 1 90); do
@@ -123,7 +123,7 @@ done
 docker compose -f docker-compose.prod.yml ps
 RUNNING=$(docker compose -f docker-compose.prod.yml ps --status running --services 2>/dev/null | tr '\n' ' ' || true)
 echo "running services: $RUNNING"
-for svc in postgres cms frontend; do
+for svc in postgres redis cms frontend; do
   if echo " $RUNNING " | grep -q " $svc "; then
     echo "OK: $svc running"
   else

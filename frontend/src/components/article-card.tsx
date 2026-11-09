@@ -35,7 +35,8 @@ export function ArticleCard({
 }) {
   const mode: Variant = variant || (featured ? "hero" : "feed");
   const href = articleHref(article);
-  const cover = coverUrl(article.cover, "medium");
+  // Original (not Strapi medium): cards are tall and Next may request 1080–1920w.
+  const cover = coverUrl(article.cover, "original");
   const blur = coverBlur(article.cover);
   const category = article.category;
   const readingTime = formatReadingMinutes(article.readingMinutes);
@@ -60,12 +61,12 @@ export function ArticleCard({
               alt={article.cover?.alternativeText || article.title}
               fill
               className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
-              // Honest sizes → browser picks from srcset; avoids 1920w for a 750 medium.
               sizes={
                 mode === "hero"
                   ? "(max-width:1024px) 100vw, 900px"
                   : "(max-width:1024px) 50vw, 280px"
               }
+              quality={85}
               // Next 16: LCP uses `preload` (priority deprecated). Do not mix with loading.
               preload={mode === "hero"}
               blurDataURL={blur}
@@ -136,6 +137,7 @@ export function ArticleCard({
             fill
             className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
             sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 400px"
+            quality={85}
             blurDataURL={blur}
           />
         ) : (

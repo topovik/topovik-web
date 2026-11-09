@@ -37,6 +37,9 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 RUN useradd -m -u 1001 nextjs
 COPY --from=build --chown=nextjs:nextjs /app/.next/standalone ./
+# Custom Redis cache handlers (required by next.config; keep next to server.js).
+COPY --from=build --chown=nextjs:nextjs /app/cache-handler.js ./cache-handler.js
+COPY --from=build --chown=nextjs:nextjs /app/cache-handlers ./cache-handlers
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

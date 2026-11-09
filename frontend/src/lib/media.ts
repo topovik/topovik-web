@@ -19,14 +19,21 @@ export function mediaUrl(url?: string | null) {
   return `${STRAPI_URL}/uploads/${url.replace(/^\//, "")}`;
 }
 
-/** Cover helper: lists use medium when present; article pages keep original. */
+/**
+ * Cover helper.
+ * - `original` / `large`: feed & article cards (medium is ~750px and looks soft when upscaled)
+ * - `medium`: tiny thumbs only (search, partner strip)
+ */
 export function coverUrl(
   cover?: StrapiMedia | null,
-  prefer: "medium" | "original" = "original",
+  prefer: "medium" | "large" | "original" = "original",
 ) {
   if (!cover?.url) return null;
   if (prefer === "medium" && cover.formats?.medium?.url) {
     return mediaUrl(cover.formats.medium.url);
+  }
+  if (prefer === "large" && cover.formats?.large?.url) {
+    return mediaUrl(cover.formats.large.url);
   }
   return mediaUrl(cover.url);
 }

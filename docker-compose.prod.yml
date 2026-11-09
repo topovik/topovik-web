@@ -21,6 +21,21 @@ services:
       timeout: 5s
       retries: 20
 
+  # Next.js Data Cache / `"use cache"` — survives frontend rebuilds.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1000", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   cms:
     build:
       context: ./cms
@@ -69,10 +84,15 @@ services:
       NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://topovik.com}
       NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     ports:
       - "127.0.0.1:3010:3000"
     depends_on:
-      - cms
+      cms:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  redis_data:
