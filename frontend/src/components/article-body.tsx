@@ -56,7 +56,10 @@ export async function ArticleBody({
   className?: string;
 }) {
   const markdown = rewriteUploads(content);
-  const dimensions = await resolveUploadDimensions(markdown).catch(() => ({}));
+  const dimensions: Record<string, { width: number; height: number }> =
+    await resolveUploadDimensions(markdown).catch(
+      () => ({} as Record<string, { width: number; height: number }>),
+    );
 
   const components: Components = {
     img: ({ src, alt, title, width, height }) => {
