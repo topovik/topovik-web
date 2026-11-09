@@ -126,8 +126,11 @@ body {
 .article-body img {
   display: block;
   width: 100%;
+  max-width: 100%;
   height: auto;
   margin: 1.25rem 0;
+  /* width/height attrs (or inline aspect-ratio) reserve space before decode */
+  background: color-mix(in oklab, var(--ink) 5%, transparent);
 }
 
 /* Medium-style zoom (same animation model as medium-zoom: transform only) */

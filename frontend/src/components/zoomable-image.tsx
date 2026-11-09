@@ -167,17 +167,35 @@ export function ZoomableImage({
   src,
   alt = "",
   title,
+  width,
+  height,
 }: {
   src?: string;
   alt?: string;
   title?: string;
+  /** Intrinsic size — reserves layout before the file loads (CLS). */
+  width?: number;
+  height?: number;
 }) {
   const imgRef = useImageZoom(src);
   if (!src) return null;
 
+  const w = width && width > 0 ? Math.round(width) : undefined;
+  const h = height && height > 0 ? Math.round(height) : undefined;
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img ref={imgRef} src={src} alt={alt} title={title} data-zoom-src={src} />
+    <img
+      ref={imgRef}
+      src={src}
+      alt={alt}
+      title={title}
+      width={w}
+      height={h}
+      data-zoom-src={src}
+      // Fallback box when CMS dims are missing — better than 0→full jump.
+      style={w && h ? undefined : { aspectRatio: "3 / 4" }}
+    />
   );
 }
 

@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { ZoomableImage } from "@/components/zoomable-image";
+import { resolveUploadDimensions } from "@/lib/image-size";
 import { mediaUrl } from "@/lib/media";
 
 const schema = {
@@ -17,31 +18,6 @@ const schema = {
   },
 };
 
-const components: Components = {
-  img: ({ src, alt, title }) => {
-    const url = typeof src === "string" ? mediaUrl(src) || src : undefined;
-    return <ZoomableImage src={url} alt={alt || ""} title={title} />;
-  },
-  a: ({ href, children, title }) => (
-    <a href={href} title={title} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
-      {children}
-    </a>
-  ),
-  iframe: (props) => {
-    const src = typeof props.src === "string" ? props.src : undefined;
-    if (!src) return null;
-    return (
-      <iframe
-        src={src}
-        title={typeof props.title === "string" ? props.title : "Embed"}
-        allowFullScreen
-        loading="lazy"
-        className="aspect-video w-full max-w-full border-0"
-      />
-    );
-  },
-};
-
 function rewriteUploads(markdown: string) {
   return markdown.replace(
     /(\]\()(\/uploads\/[^)\s]+)(\))/g,
@@ -52,8 +28,27 @@ function rewriteUploads(markdown: string) {
   );
 }
 
+function dimensionKey(src: string) {
+  try {
+    if (src.startsWith("http://") || src.startsWith("https://")) {
+      return new URL(src).pathname.split("?")[0];
+    }
+  } catch {
+    /* keep */
+  }
+  return src.split("?")[0];
+}
+
+function readDim(...values: Array<string | number | undefined>) {
+  for (const value of values) {
+    const n = typeof value === "number" ? value : Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return undefined;
+}
+
 /** Render Strapi richtext (Markdown; legacy HTML tolerated via rehype-raw). */
-export function ArticleBody({
+export async function ArticleBody({
   content,
   className,
 }: {
@@ -61,6 +56,42 @@ export function ArticleBody({
   className?: string;
 }) {
   const markdown = rewriteUploads(content);
+  const dimensions = await resolveUploadDimensions(markdown).catch(() => ({}));
+
+  const components: Components = {
+    img: ({ src, alt, title, width, height }) => {
+      const url = typeof src === "string" ? mediaUrl(src) || src : undefined;
+      const key = url ? dimensionKey(url) : "";
+      const meta = key ? dimensions[key] : undefined;
+      return (
+        <ZoomableImage
+          src={url}
+          alt={alt || ""}
+          title={title}
+          width={readDim(width, meta?.width)}
+          height={readDim(height, meta?.height)}
+        />
+      );
+    },
+    a: ({ href, children, title }) => (
+      <a href={href} title={title} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
+        {children}
+      </a>
+    ),
+    iframe: (props) => {
+      const src = typeof props.src === "string" ? props.src : undefined;
+      if (!src) return null;
+      return (
+        <iframe
+          src={src}
+          title={typeof props.title === "string" ? props.title : "Embed"}
+          allowFullScreen
+          loading="lazy"
+          className="aspect-video w-full max-w-full border-0"
+        />
+      );
+    },
+  };
 
   return (
     <div className={className ? `article-body ${className}` : "article-body"}>

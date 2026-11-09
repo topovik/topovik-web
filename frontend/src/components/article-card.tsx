@@ -12,17 +12,13 @@ import type { Article } from "@/lib/types";
 
 type Variant = "feed" | "mosaic" | "hero";
 
-/** Stronger ratio swings so masonry columns get a clear rhythm. */
+/**
+ * Fixed rhythm (same as ListingSkeleton / MasonryCardSkeleton).
+ * Do not derive from cover — Suspense skeleton → content would CLS every card.
+ */
 const FEED_ASPECTS = [0.68, 1.45, 0.92, 1.2, 0.75, 1.55, 0.85, 1.1];
 
-function feedAspectRatio(
-  cover: Article["cover"] | undefined,
-  index: number,
-) {
-  if (cover?.width && cover?.height && cover.height > 0) {
-    const ratio = cover.width / cover.height;
-    return Math.min(1.6, Math.max(0.62, ratio));
-  }
+function feedAspectRatio(index: number) {
   return FEED_ASPECTS[index % FEED_ASPECTS.length];
 }
 
@@ -47,7 +43,7 @@ export function ArticleCard({
     article.views != null && article.views > 0
       ? `${formatCount(article.views)} просм.`
       : null;
-  const feedAspect = feedAspectRatio(article.cover, index);
+  const feedAspect = feedAspectRatio(index);
 
   if (mode === "hero" || mode === "mosaic") {
     return (
