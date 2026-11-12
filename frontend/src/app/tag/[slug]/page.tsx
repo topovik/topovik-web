@@ -14,10 +14,15 @@ import { getArticles, getTagBySlug } from "@/lib/strapi";
 
 type Props = { params: Promise<{ slug: string }> };
 
+export const instant = false;
+export const unstable_paramMatching = { slug: "blocking" } as const;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tag = await getTagBySlug(slug);
-  if (!tag) return { title: "Тег" };
+  if (!tag) {
+    return { title: "Тег", robots: { index: false, follow: false } };
+  }
 
   const list = await getArticles({ tagSlug: slug, pageSize: 1 }).catch(
     () => null,
@@ -36,19 +41,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function TagPage({ params }: Props) {
-  return (
-    <Suspense fallback={<ListingSkeleton filters={false} />}>
-      <TagContent params={params} />
-    </Suspense>
-  );
-}
-
-async function TagContent({ params }: Props) {
+export default async function TagPage({ params }: Props) {
   const { slug } = await params;
   const tag = await getTagBySlug(slug);
   if (!tag) notFound();
 
+  return (
+    <Suspense fallback={<ListingSkeleton filters={false} />}>
+      <TagContent tag={tag} slug={slug} />
+    </Suspense>
+  );
+}
+
+async function TagContent({
+  tag,
+  slug,
+}: {
+  tag: NonNullable<Awaited<ReturnType<typeof getTagBySlug>>>;
+  slug: string;
+}) {
   const list = await getArticles({ tagSlug: slug, pageSize: 24 });
   const description = `Подборки и топы с тегом «${tag.name}».`;
 

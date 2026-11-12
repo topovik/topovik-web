@@ -47,7 +47,8 @@ async function strapiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-const articlePopulate = [
+/** Relations shared by list cards and full article pages. */
+const articleRelationPopulate = [
   "populate[category][fields][0]=name",
   "populate[category][fields][1]=slug",
   "populate[cover][fields][0]=url",
@@ -58,6 +59,31 @@ const articlePopulate = [
   "populate[cover][fields][5]=provider_metadata",
   "populate[tags][fields][0]=name",
   "populate[tags][fields][1]=slug",
+].join("&");
+
+/**
+ * Card/list query — explicit fields, no `content` body.
+ * Full article HTML in lists was ~1.6MB homepage Flight/HTML and tanked TTFB.
+ */
+const articleCardPopulate = [
+  "fields[0]=title",
+  "fields[1]=slug",
+  "fields[2]=documentId",
+  "fields[3]=publishedAt",
+  "fields[4]=updatedAt",
+  "fields[5]=createdAt",
+  "fields[6]=readingMinutes",
+  "fields[7]=views",
+  "fields[8]=likes",
+  "fields[9]=legacyPath",
+  articleRelationPopulate,
+  // Tiny vs article body; keeps RSS / JSON-LD descriptions useful.
+  "populate[seo]=true",
+].join("&");
+
+/** Full article page — body + SEO. */
+const articlePopulate = [
+  articleRelationPopulate,
   "populate[seo]=true",
 ].join("&");
 
@@ -158,7 +184,7 @@ export async function getAllArticles(pageSize = 100) {
           `pagination[page]=${page}`,
           `pagination[pageSize]=${pageSize}`,
           "sort=publishedAt:desc",
-          articlePopulate,
+          articleCardPopulate,
         ].join("&")}`,
       );
       articles.push(...data.data);
@@ -195,7 +221,7 @@ export async function getArticles(
     `pagination[page]=${page}`,
     `pagination[pageSize]=${pageSize}`,
     `sort=publishedAt:desc`,
-    articlePopulate,
+    articleCardPopulate,
   ];
 
   if (opts.categorySlug) {
@@ -335,7 +361,7 @@ export async function getPopularArticles(limit = 5) {
         "status=published",
         `pagination[pageSize]=${limit}`,
         "sort=views:desc",
-        articlePopulate,
+        articleCardPopulate,
       ].join("&")}`,
     );
     return data.data;
@@ -364,7 +390,7 @@ export async function getAdjacentArticles(opts: {
     ? `filters[category][slug][$eq]=${encodeURIComponent(opts.categorySlug)}`
     : null;
 
-  const base = [`status=published`, `pagination[pageSize]=1`, articlePopulate];
+  const base = [`status=published`, `pagination[pageSize]=1`, articleCardPopulate];
   if (categoryFilter) base.push(categoryFilter);
 
   try {
@@ -432,7 +458,7 @@ export async function getRecommendedArticles(opts: {
           `pagination[pageSize]=${fetchSize}`,
           `sort=publishedAt:desc`,
           `filters[documentId][$ne]=${encodeURIComponent(exclude)}`,
-          articlePopulate,
+          articleCardPopulate,
         ];
         tagSlugs.slice(0, 4).forEach((slug, i) => {
           tagParams.push(
@@ -458,7 +484,7 @@ export async function getRecommendedArticles(opts: {
       `pagination[pageSize]=${fetchSize}`,
       `sort=views:desc`,
       `filters[documentId][$ne]=${encodeURIComponent(exclude)}`,
-      articlePopulate,
+      articleCardPopulate,
     ].join("&")}`
   );
 

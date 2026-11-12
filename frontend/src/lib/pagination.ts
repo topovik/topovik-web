@@ -1,8 +1,11 @@
 /** Articles per page on home feed and `/page/N` archive. */
 export const HOME_PAGE_SIZE = 12;
 
-/** Extra pool on home for carousel fallback / «Сейчас читают». */
-export const HOME_FETCH_SIZE = 60;
+/**
+ * Extra pool on home for carousel fallback / «Сейчас читают».
+ * Keep near featured count — fetching 60 full cards bloated homepage HTML.
+ */
+export const HOME_FETCH_SIZE = 30;
 
 /** Home featured carousel: hero + 4 mosaic tiles per slide. */
 export const FEATURED_SLIDE_SIZE = 5;

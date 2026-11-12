@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs ON the server from /var/www/topovik
 # Safe alongside vuca (host :3000 / :1337). Topovik uses :3010 / :1340 / :5434.
-set -uo pipefail
+set -euo pipefail
 export LANG=C.UTF-8 LC_ALL=C.UTF-8
 export DEBIAN_FRONTEND=noninteractive
 
@@ -95,19 +95,26 @@ echo '==> 2/3 build + start cms (Strapi) on :'"$CMS_PORT"
 docker compose -f docker-compose.prod.yml build cms
 docker compose -f docker-compose.prod.yml up -d cms
 echo "waiting cms on :$CMS_PORT ..."
+cms_ready=0
 for i in $(seq 1 120); do
   if curl -sf -o /dev/null "http://127.0.0.1:${CMS_PORT}/admin"; then
     echo "cms ready (try $i)"
+    cms_ready=1
     break
   fi
   sleep 3
 done
+if [ "$cms_ready" != 1 ]; then
+  echo "ERROR: cms did not become ready on :$CMS_PORT" >&2
+  exit 1
+fi
 
 echo '==> 3/3 build + start frontend (Next) on :'"$WEB_PORT"
 docker compose -f docker-compose.prod.yml build frontend
 docker compose -f docker-compose.prod.yml up -d --remove-orphans postgres redis cms frontend
 
 echo '==> waiting cms/frontend ports'
+both_ready=0
 for i in $(seq 1 90); do
   cms_ok=0
   web_ok=0
@@ -115,10 +122,16 @@ for i in $(seq 1 90); do
   curl -sf -o /dev/null "http://127.0.0.1:${WEB_PORT}/" && web_ok=1 || true
   if [ "$cms_ok" = 1 ] && [ "$web_ok" = 1 ]; then
     echo "both ready (try $i)"
+    both_ready=1
     break
   fi
   sleep 2
 done
+if [ "$both_ready" != 1 ]; then
+  echo "ERROR: cms/frontend ports not ready" >&2
+  docker compose -f docker-compose.prod.yml ps >&2 || true
+  exit 1
+fi
 
 docker compose -f docker-compose.prod.yml ps
 RUNNING=$(docker compose -f docker-compose.prod.yml ps --status running --services 2>/dev/null | tr '\n' ' ' || true)
@@ -128,6 +141,7 @@ for svc in postgres redis cms frontend; do
     echo "OK: $svc running"
   else
     echo "ERROR: $svc NOT running" >&2
+    exit 1
   fi
 done
 

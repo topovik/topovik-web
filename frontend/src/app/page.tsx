@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { FeaturedCarousel } from "@/components/featured-carousel";
 import { FeedSection } from "@/components/feed-section";
 import { JsonLd } from "@/components/json-ld";
@@ -19,13 +20,35 @@ import {
   getFeaturedArticles,
   getPopularArticles,
 } from "@/lib/strapi";
+import type { Article } from "@/lib/types";
+
+function dedupeArticles(...lists: Article[][]) {
+  const seen = new Set<string>();
+  const out: Article[] = [];
+  for (const list of lists) {
+    for (const article of list) {
+      if (seen.has(article.documentId)) continue;
+      seen.add(article.documentId);
+      out.push(article);
+    }
+  }
+  return out;
+}
+
+async function HomePopular({
+  promo,
+}: {
+  promo: Article | null;
+}) {
+  const popular = await getPopularArticles(5).catch(() => []);
+  return <PopularSection articles={popular} promo={promo} />;
+}
 
 export default async function HomePage() {
-  const [featured, list, categories, popular] = await Promise.all([
+  const [featured, list, categories] = await Promise.all([
     getFeaturedArticles(FEATURED_ARTICLE_COUNT),
     getArticles({ page: 1, pageSize: HOME_FETCH_SIZE }),
     getCategories().catch(() => []),
-    getPopularArticles(5).catch(() => []),
   ]);
 
   const carouselSource = (featured.length ? featured : list.data).slice(
@@ -33,12 +56,13 @@ export default async function HomePage() {
     FEATURED_ARTICLE_COUNT,
   );
   const feed = list.data.slice(0, HOME_PAGE_SIZE);
+  const pool = dedupeArticles(carouselSource, list.data);
   const promo =
     carouselSource[0] ||
     list.data.find((a) => a.cover?.url) ||
     list.data[0] ||
     null;
-  const tickerSource = list.data.slice(0, 8);
+  const tickerSource = pool.slice(0, 8);
   // Home fetches a larger pool, but «Дальше» goes to `/page/N` with HOME_PAGE_SIZE.
   const pageCount = pageCountFromTotal(list.meta.pagination.total);
 
@@ -47,7 +71,7 @@ export default async function HomePage() {
       <JsonLd data={jsonLdGraph(homeJsonLd(feed))} />
       <NewsTicker articles={tickerSource} />
       <FeaturedCarousel articles={carouselSource} />
-      <PartnerBanner articles={list.data} />
+      <PartnerBanner articles={pool} />
       <FeedSection articles={feed} categories={categories} />
 
       {pageCount > 1 ? <link rel="next" href="/page/2" /> : null}
@@ -58,7 +82,9 @@ export default async function HomePage() {
         className="mx-auto flex max-w-site items-center justify-center gap-3 px-4 pb-10 sm:gap-4 sm:px-6 sm:pb-14"
       />
 
-      <PopularSection articles={popular} promo={promo} />
+      <Suspense fallback={null}>
+        <HomePopular promo={promo} />
+      </Suspense>
       <Newsletter />
     </main>
   );

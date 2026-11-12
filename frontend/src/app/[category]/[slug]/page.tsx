@@ -40,6 +40,13 @@ import type { Article } from "@/lib/types";
 
 type Props = { params: Promise<{ category: string; slug: string }> };
 
+// Prefetch shell must wait on this URL so notFound()/redirect can set real HTTP status.
+export const instant = false;
+export const unstable_paramMatching = {
+  category: "blocking",
+  slug: "blocking",
+} as const;
+
 const RESERVED = new Set(["category", "tag", "search", "page", "about", "ads", "api"]);
 
 async function resolveOrRedirect(category: string, slug: string) {
@@ -52,9 +59,12 @@ async function resolveOrRedirect(category: string, slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category, slug } = await params;
-  if (RESERVED.has(category)) return {};
+  if (RESERVED.has(category)) return { robots: { index: false, follow: false } };
   const resolved = await resolveArticleFromParams(category, slug);
-  if (!resolved) return { title: "Не найдено" };
+  // Keep metadata aligned with notFound(): soft-404 HTML+noindex without HTTP 404 still hurts SEO.
+  if (!resolved) {
+    return { title: "Не найдено", robots: { index: false, follow: false } };
+  }
   // Metadata for legacy URLs still points at the live canonical; HTTP 308 happens in the page.
   const article = resolved.article;
 
@@ -89,18 +99,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function ArticlePage({ params }: Props) {
-  return (
-    <Suspense fallback={<ArticleSkeleton />}>
-      <ArticleFromParams params={params} />
-    </Suspense>
-  );
-}
-
-async function ArticleFromParams({ params }: Props) {
+export default async function ArticlePage({ params }: Props) {
+  // Existence check before Suspense — real HTTP 404 (streaming guide).
   const { category, slug } = await params;
   const article = await resolveOrRedirect(category, slug);
-  return <ArticleContent article={article} />;
+  return (
+    <Suspense fallback={<ArticleSkeleton />}>
+      <ArticleContent article={article} />
+    </Suspense>
+  );
 }
 
 async function ArticleContent({ article }: { article: Article }) {

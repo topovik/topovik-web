@@ -18,10 +18,15 @@ import { getArticles, getCategories, getCategoryBySlug } from "@/lib/strapi";
 
 type Props = { params: Promise<{ slug: string }> };
 
+export const instant = false;
+export const unstable_paramMatching = { slug: "blocking" } as const;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
-  if (!category) return { title: "Рубрика" };
+  if (!category) {
+    return { title: "Рубрика", robots: { index: false, follow: false } };
+  }
 
   const list = await getArticles({
     categorySlug: slug,
@@ -43,19 +48,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function CategoryPage({ params }: Props) {
-  return (
-    <Suspense fallback={<ListingSkeleton description />}>
-      <CategoryContent params={params} />
-    </Suspense>
-  );
-}
-
-async function CategoryContent({ params }: Props) {
+export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
+  return (
+    <Suspense fallback={<ListingSkeleton description />}>
+      <CategoryContent category={category} slug={slug} />
+    </Suspense>
+  );
+}
+
+async function CategoryContent({
+  category,
+  slug,
+}: {
+  category: NonNullable<Awaited<ReturnType<typeof getCategoryBySlug>>>;
+  slug: string;
+}) {
   const [list, categories] = await Promise.all([
     getArticles({
       categorySlug: slug,

@@ -42,20 +42,31 @@ const DEFAULT_OG_IMAGE = {
   alt: SITE_TITLE,
 } as const satisfies OgImage;
 
+/** Strip WP permalink junk: trailing spaces, %20, NBSP, trailing slash. */
+function cleanPath(path: string) {
+  return path
+    .replace(/%20/gi, "")
+    .replace(/\u00a0/g, " ")
+    .trim()
+    .replace(/\/+$/, "");
+}
+
 /** Prefer CMS canonicalPath; fall back to computed path. Always site-relative. */
 export function resolveCanonicalPath(
   seoCanonical: string | null | undefined,
   fallback: string,
 ) {
-  const raw = (seoCanonical || fallback || "/").trim();
-  if (!raw) return fallback.startsWith("/") ? fallback : `/${fallback}`;
+  const fallbackClean = cleanPath(fallback || "/") || "/";
+  const raw = cleanPath(seoCanonical || fallbackClean || "/");
+  if (!raw) return fallbackClean.startsWith("/") ? fallbackClean : `/${fallbackClean}`;
 
   if (/^https?:\/\//i.test(raw)) {
     try {
       const { pathname, search } = new URL(raw);
-      return `${pathname || "/"}${search || ""}`;
+      const path = cleanPath(pathname || "/") || "/";
+      return `${path.startsWith("/") ? path : `/${path}`}${search || ""}`;
     } catch {
-      return fallback.startsWith("/") ? fallback : `/${fallback}`;
+      return fallbackClean.startsWith("/") ? fallbackClean : `/${fallbackClean}`;
     }
   }
 
@@ -66,7 +77,12 @@ export function articleCanonicalPath(article: Article) {
   const href = articleHref(article);
   const seoPath = article.seo?.canonicalPath;
   // After slug renames, CMS canonical often still equals legacyPath — prefer the live href.
-  if (seoPath && seoPath !== article.legacyPath) {
+  // Also ignore dirty CMS paths that only differ by %20 / trailing space.
+  if (
+    seoPath &&
+    cleanPath(seoPath) !== cleanPath(article.legacyPath || "") &&
+    cleanPath(seoPath) !== cleanPath(href)
+  ) {
     return resolveCanonicalPath(seoPath, href);
   }
   return href;

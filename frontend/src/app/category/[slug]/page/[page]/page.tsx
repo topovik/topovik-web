@@ -17,6 +17,12 @@ import { getArticles, getCategories, getCategoryBySlug } from "@/lib/strapi";
 
 type Props = { params: Promise<{ slug: string; page: string }> };
 
+export const instant = false;
+export const unstable_paramMatching = {
+  slug: "blocking",
+  page: "blocking",
+} as const;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, page: pageParam } = await params;
   const page = Number(pageParam);
@@ -40,15 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function CategoryPaged({ params }: Props) {
-  return (
-    <Suspense fallback={<ListingSkeleton description />}>
-      <CategoryPagedContent params={params} />
-    </Suspense>
-  );
-}
-
-async function CategoryPagedContent({ params }: Props) {
+export default async function CategoryPaged({ params }: Props) {
   const { slug, page: pageParam } = await params;
   const page = Number(pageParam);
   if (!Number.isFinite(page) || page < 2) notFound();
@@ -56,16 +54,37 @@ async function CategoryPagedContent({ params }: Props) {
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const [list, categories] = await Promise.all([
-    getArticles({
-      categorySlug: slug,
-      page,
-      pageSize: CATEGORY_PAGE_SIZE,
-    }),
-    getCategories().catch(() => []),
-  ]);
-
+  const list = await getArticles({
+    categorySlug: slug,
+    page,
+    pageSize: CATEGORY_PAGE_SIZE,
+  });
   if (!list.data.length || page > list.meta.pagination.pageCount) notFound();
+
+  return (
+    <Suspense fallback={<ListingSkeleton description />}>
+      <CategoryPagedContent
+        category={category}
+        slug={slug}
+        page={page}
+        list={list}
+      />
+    </Suspense>
+  );
+}
+
+async function CategoryPagedContent({
+  category,
+  slug,
+  page,
+  list,
+}: {
+  category: NonNullable<Awaited<ReturnType<typeof getCategoryBySlug>>>;
+  slug: string;
+  page: number;
+  list: Awaited<ReturnType<typeof getArticles>>;
+}) {
+  const categories = await getCategories().catch(() => []);
 
   const { pageCount } = list.meta.pagination;
   const path = categoryHref(category.slug, page);
