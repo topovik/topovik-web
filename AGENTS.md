@@ -9,7 +9,8 @@
 - Homepage «Все новое» shows 12 items; do not exclude carousel or «сейчас читают» articles from that list
 - Keep the partner-materials slot; «сейчас читают» should stay a compact vertical block with small thumbnails
 - Put popular «Юмор» in the header nav; remaining categories can live in the footer
-- Prefer current Next.js docs over ad-hoc image/cache workarounds; Redis custom cache was tried and abandoned for Cache Components; do not use `connection()` or `instant = false` to force HTTP status
+- Prefer current Next.js docs over ad-hoc image/cache workarounds; Redis custom cache was tried and abandoned for Cache Components; keep partialPrefetching on; do not use `connection()` or `instant = false` to force HTTP status
+- Prioritize homepage TTFB and HTML payload before GTM/analytics work; keep GTM deferred once delayed
 
 ## Learned Workspace Facts
 
@@ -22,5 +23,6 @@
 - On articles, prefer showing a meaningful update/freshness date over a raw create date when available; JSON-LD dateModified should stay coherent with that
 - Site chrome: accent from the logo play mark (not red); `--max-width-site` ~90rem; article body max-width 1280px centered under a full-width cover
 - SEO stack matters: JSON-LD, Open Graph, sitemap (including category pagination), Search Console / Core Web Vitals checks after content or layout changes
-- Cover and card images must be subject-accurate; reading-time estimates should account for images in the article
+- Cover and card images must be subject-accurate; in-body images need adequate source resolution (avoid ~200px uploads stretched in the column); reading-time estimates should account for images in the article
+- Listing/card Strapi fetches must omit full article `content`; only article pages load the body
 - Related property: gvillage.by (countryside rental) is occasionally cross-linked from travel content
